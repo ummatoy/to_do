@@ -186,7 +186,7 @@ class _CalendarState extends State<Calendar> {
           borderRadius: Style.border24,
         ),
         child: TableCalendar(
-//onDaySelected: onDaySelected,
+           onDaySelected: _onDaySelected,
           calendarController: _calendarController,
           events: _events,
           calendarStyle: CalendarStyle(
