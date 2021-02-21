@@ -15,32 +15,25 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> {
-  DateTime selectedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
+
   CalendarController _calendarController;
   Map<DateTime, List<dynamic>> _events = {};
   List<CalendarItem> _data = [];
 
   List<dynamic> _selectedEvents = [];
   List<Widget> get _eventWidgets =>
-      _selectedEvents.map((e) => tasks(e)).toList();
+      _selectedEvents.map((e) => events(e)).toList();
 
   void initState() {
     super.initState();
-    DB.init().then((value) => _fetchTasks());
+    DB.init().then((value) => _fetchEvents());
     _calendarController = CalendarController();
   }
 
-  @override
   void dispose() {
     _calendarController.dispose();
     super.dispose();
-  }
-
-  void _onDaySelected(DateTime day, List events, _) {
-    setState(() {
-      selectedDay = day;
-      _selectedEvents = events;
-    });
   }
 
   void logOut() {
@@ -55,7 +48,7 @@ class _CalendarState extends State<Calendar> {
         onPressed: logOut,
       );
 
-  Widget tasks(var d) {
+  Widget events(var d) {
     return Container(
       padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Container(
@@ -67,11 +60,23 @@ class _CalendarState extends State<Calendar> {
           )),
           child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text(d, style: Style.headline5),
+            Text(d, style: Style.subtitle1),
             IconButton(
-                icon: Icon(Icons.delete), onPressed: () => _deleteTask(d))
+                icon: Icon(
+                  Icons.delete,
+                  color: Style.colors.primary,
+                  size: 15,
+                ),
+                onPressed: () => _deleteEvent(d))
           ])),
     );
+  }
+
+  void _onDaySelected(DateTime day, List events, _) {
+    setState(() {
+      _selectedDay = day;
+      _selectedEvents = events;
+    });
   }
 
   void _createTask(BuildContext context) {
@@ -89,7 +94,7 @@ class _CalendarState extends State<Calendar> {
     );
     var saveButton = Button.primary(
       text: 'Save',
-      onPressed: () => _addTask(_name),
+      onPressed: () => _addEvent(_name),
     );
     var cancelButton = Button.primary(
         text: "Cancel", onPressed: () => Navigator.of(context).pop(false));
@@ -137,7 +142,7 @@ class _CalendarState extends State<Calendar> {
     );
   }
 
-  void _fetchTasks() async {
+  void _fetchEvents() async {
     _events = {};
     List<Map<String, dynamic>> _results = await DB.query(CalendarItem.table);
     _data = _results.map((item) => CalendarItem.fromMap(item)).toList();
@@ -153,21 +158,22 @@ class _CalendarState extends State<Calendar> {
     setState(() {});
   }
 
-  void _addTask(String event) async {
-    CalendarItem item = CalendarItem(date: selectedDay.toString(), name: event);
+  void _addEvent(String event) async {
+    CalendarItem item =
+        CalendarItem(date: _selectedDay.toString(), name: event);
     await DB.insert(CalendarItem.table, item);
     _selectedEvents.add(event);
-    _fetchTasks();
+    _fetchEvents();
 
     Navigator.pop(context);
   }
 
-  void _deleteTask(String s) {
+  void _deleteEvent(String s) {
     List<CalendarItem> d = _data.where((element) => element.name == s).toList();
     if (d.length == 1) {
       DB.delete(CalendarItem.table, d[0]);
       _selectedEvents.removeWhere((e) => e == s);
-      _fetchTasks();
+      _fetchEvents();
     }
   }
 
@@ -180,12 +186,7 @@ class _CalendarState extends State<Calendar> {
           borderRadius: Style.border24,
         ),
         child: TableCalendar(
-          // onDaySelected: (date, events, holidays) {
-          // setState(() {
-          // _selectedEvents = events;
-          //});
-          //},
-          // onDaySelected: _onDaySelected,
+//onDaySelected: onDaySelected,
           calendarController: _calendarController,
           events: _events,
           calendarStyle: CalendarStyle(
